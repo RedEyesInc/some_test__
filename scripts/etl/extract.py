@@ -1,4 +1,5 @@
 import os
+import logging
 
 import requests
 import psycopg2
@@ -79,6 +80,9 @@ def load_into_postgress(posts: list[dict], cursor) -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
+    logging.info('Connect to PostgreSQL.')
     connect = psycopg2.connect(
         dbname='posts_db', 
         user='post_user', 
@@ -87,16 +91,22 @@ if __name__ == "__main__":
     )
     cursor = connect.cursor()
 
+    logging.info('Create table raw_users_by_posts if not exist.')
     with open('../sql/raw_users_by_posts.sql', 'r') as raw_users_by_posts_file:
         script = raw_users_by_posts_file.read()
         cursor.execute(script)
 
+    logging.info('Read posts from API.')
     posts = read_posts('https://jsonplaceholder.typicode.com/posts')
 
+    logging.info('Get maximum post id from raw_users_by_posts.')
     max_id = max_id_in_table(cursor)
+
+    logging.info('Remove posts already exist in raw_users_by_posts.')
     posts = data_filter(posts, max_id)
     
     if len(posts) > 0:
+        logging.info('Load posts into raw_users_by_posts.')
         load_into_postgress(posts, cursor)
         connect.commit()
 
