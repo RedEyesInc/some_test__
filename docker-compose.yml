@@ -8,4 +8,20 @@ services:
       POSTGRES_PASSWORD: "pgpwd4post"
     ports:
       - "5432:5432"
-  # etl:
+    network_mode: host
+  extract:
+    build:
+      context: ./scripts/extract
+      dockerfile: Dockerfile
+    image: extract_result/latest
+    depends_on:
+      - db
+    network_mode: host
+  transform:
+    build:
+      context: ./scripts/transform
+      dockerfile: Dockerfile
+    image: transform_result/latest
+    depends_on:
+      - db
+    network_mode: host
