@@ -8,12 +8,18 @@ services:
       POSTGRES_PASSWORD: "pgpwd4post"
     ports:
       - "5432:5432"
-    network_mode: host
   extract:
     build:
       context: ./scripts/extract
       dockerfile: Dockerfile
     image: extract_result/latest
+    environment:
+      POSTGRES_DB: "posts_db"
+      POSTGRES_USER: "post_user"
+      POSTGRES_PASSWORD: "pgpwd4post"
+      POSTGRES_HOST: "localhost"
+      URL_API: "https://jsonplaceholder.typicode.com/posts"
+      TIMEOUT: "30"
     depends_on:
       - db
     network_mode: host
@@ -22,6 +28,12 @@ services:
       context: ./scripts/transform
       dockerfile: Dockerfile
     image: transform_result/latest
+    environment:
+      POSTGRES_DB: "posts_db"
+      POSTGRES_USER: "post_user"
+      POSTGRES_PASSWORD: "pgpwd4post"
+      POSTGRES_HOST: "localhost"
+      TIMEOUT: "45"
     depends_on:
       - db
     network_mode: host

@@ -6,17 +6,17 @@ import psycopg2
 
 
 if __name__ == "__main__":
-    time.sleep(10)
     logging.basicConfig(level=logging.INFO)
 
     while True:
-        time.sleep(45)
+        time.sleep(int(os.environ['TIMEOUT']))
+        
         logging.info('transform: Connect to PostgreSQL.')
         connect = psycopg2.connect(
-            dbname='posts_db', 
-            user='post_user', 
-            password='pgpwd4post', 
-            host='localhost'
+            dbname=os.environ['POSTGRES_DB'], 
+            user=os.environ['POSTGRES_USER'], 
+            password=os.environ['POSTGRES_PASSWORD'], 
+            host=os.environ['POSTGRES_HOST'],
         )
         cursor = connect.cursor()
 
@@ -32,16 +32,9 @@ if __name__ == "__main__":
 
         logging.info('transform: Update top_users_by_posts.')
         cursor.execute('truncate top_users_by_posts')
-        cursor.execute('''
-            insert into top_users_by_posts (user_id, posts_cnt, calculated_at)
-                select 
-                    user_id,
-                    count(id) as posts_cnt,
-                    NOW() as calculated_at
-                from raw_users_by_posts
-                group by 
-                    user_id
-        ''')
-        connect.commit()
+        with open('update_top_users_by_posts.sql', 'r') as update_top_users_by_posts_file:
+            script = update_top_users_by_posts_file.read()
+            cursor.execute(script)
 
+        connect.commit()
         connect.close()
